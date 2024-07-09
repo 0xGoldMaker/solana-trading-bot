@@ -63,3 +63,9 @@ export const MIN_POOL_SIZE = retrieveEnvVariable('MIN_POOL_SIZE', logger);
 export const MAX_POOL_SIZE = retrieveEnvVariable('MAX_POOL_SIZE', logger);
 export const USE_SNIPE_LIST = retrieveEnvVariable('USE_SNIPE_LIST', logger) === 'true';
 export const SNIPE_LIST_REFRESH_INTERVAL = Number(retrieveEnvVariable('SNIPE_LIST_REFRESH_INTERVAL', logger));
+
+
+// Add these lines to your constants.ts file
+export const TRAILING_TAKE_PROFIT = Number(retrieveEnvVariable('TRAILING_TAKE_PROFIT', logger)) || 2;
+export const TRAILING_STOP_LOSS = Number(retrieveEnvVariable('TRAILING_STOP_LOSS', logger)) || 1;
+export const SOL_PRICE = Number(retrieveEnvVariable('SOL_PRICE', logger)) || 0;

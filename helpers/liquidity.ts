@@ -1,43 +1,45 @@
 import { PublicKey } from '@solana/web3.js';
-import { Liquidity, LiquidityPoolKeys, LiquidityStateV4, MAINNET_PROGRAM_ID, Market } from '@raydium-io/raydium-sdk';
+import { LiquidityPoolKeysV4, LiquidityStateV4, MAINNET_PROGRAM_ID } from '@raydium-io/raydium-sdk';
 import { MinimalMarketLayoutV3 } from './market';
+import BN from 'bn.js';
 
 export function createPoolKeys(
   id: PublicKey,
-  accountData: LiquidityStateV4,
-  minimalMarketLayoutV3: MinimalMarketLayoutV3,
-): LiquidityPoolKeys {
+  poolState: Partial<LiquidityStateV4>,
+  marketState: MinimalMarketLayoutV3 | null
+): LiquidityPoolKeysV4 {
   return {
     id,
-    baseMint: accountData.baseMint,
-    quoteMint: accountData.quoteMint,
-    lpMint: accountData.lpMint,
-    baseDecimals: accountData.baseDecimal.toNumber(),
-    quoteDecimals: accountData.quoteDecimal.toNumber(),
-    lpDecimals: 5,
+    baseMint: poolState.baseMint || PublicKey.default,
+    quoteMint: poolState.quoteMint || PublicKey.default,
+    lpMint: poolState.lpMint || PublicKey.default,
+    baseDecimals: (poolState.baseDecimal as BN | undefined)?.toNumber() || 0,
+    quoteDecimals: (poolState.quoteDecimal as BN | undefined)?.toNumber() || 0,
+    lpDecimals: (poolState.lpReserve as BN | undefined)?.toNumber() || 0,
     version: 4,
     programId: MAINNET_PROGRAM_ID.AmmV4,
-    authority: Liquidity.getAssociatedAuthority({
-      programId: MAINNET_PROGRAM_ID.AmmV4,
-    }).publicKey,
-    openOrders: accountData.openOrders,
-    targetOrders: accountData.targetOrders,
-    baseVault: accountData.baseVault,
-    quoteVault: accountData.quoteVault,
+    authority: PublicKey.findProgramAddressSync(
+      [Buffer.from('amm authority')],
+      MAINNET_PROGRAM_ID.AmmV4
+    )[0],
+    openOrders: poolState.openOrders || PublicKey.default,
+    targetOrders: poolState.targetOrders || PublicKey.default,
+    baseVault: poolState.baseVault || PublicKey.default,
+    quoteVault: poolState.quoteVault || PublicKey.default,
+    withdrawQueue: poolState.withdrawQueue || PublicKey.default,
+    lpVault: poolState.lpVault || PublicKey.default,
     marketVersion: 3,
-    marketProgramId: accountData.marketProgramId,
-    marketId: accountData.marketId,
-    marketAuthority: Market.getAssociatedAuthority({
-      programId: accountData.marketProgramId,
-      marketId: accountData.marketId,
-    }).publicKey,
-    marketBaseVault: accountData.baseVault,
-    marketQuoteVault: accountData.quoteVault,
-    marketBids: minimalMarketLayoutV3.bids,
-    marketAsks: minimalMarketLayoutV3.asks,
-    marketEventQueue: minimalMarketLayoutV3.eventQueue,
-    withdrawQueue: accountData.withdrawQueue,
-    lpVault: accountData.lpVault,
-    lookupTableAccount: PublicKey.default,
+    marketProgramId: poolState.marketProgramId || PublicKey.default,
+    marketId: poolState.marketId || PublicKey.default,
+    marketAuthority: poolState.marketId ? PublicKey.findProgramAddressSync(
+      [poolState.marketId.toBuffer()],
+      poolState.marketProgramId || MAINNET_PROGRAM_ID.AmmV4
+    )[0] : PublicKey.default,
+    marketBaseVault: poolState.baseVault || PublicKey.default,
+    marketQuoteVault: poolState.quoteVault || PublicKey.default,
+    marketBids: marketState ? marketState.bids : PublicKey.default,
+    marketAsks: marketState ? marketState.asks : PublicKey.default,
+    marketEventQueue: marketState ? marketState.eventQueue : PublicKey.default,
+    lookupTableAccount: PublicKey.default
   };
 }
